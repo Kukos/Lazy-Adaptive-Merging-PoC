@@ -1,5 +1,6 @@
 #include <log.h>
 #include <common.h>
+#include <experiments.h>
 
 ___before_main___(0) void init(void);
 ___after_main___(0) void deinit(void);
@@ -16,5 +17,6 @@ ___after_main___(0) void deinit(void)
 
 int main(void)
 {
+    db_index_experiment_workload(10);
     return 0;
 }

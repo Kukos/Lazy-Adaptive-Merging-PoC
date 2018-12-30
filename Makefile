@@ -27,7 +27,7 @@ DEPS += $(wildcard $(EIDIR)/*.h)
 
 SUBDIR := $(PROJECT_DIR)/submodules
 
-LIBS :=
+LIBS := -lm
 
 EXEC := main.out
 
