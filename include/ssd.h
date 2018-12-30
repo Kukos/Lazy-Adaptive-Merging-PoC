@@ -67,6 +67,17 @@ SSD *ssd_create_intelDCP4511(void);
 SSD *ssd_create_toshibaVX500(void);
 
 /*
+    Destroy SSD
+
+    PARAMS
+    @IN ssd - pointer to SSD
+
+    RETURN
+    This is a void function
+*/
+void ssd_destroy(SSD *ssd);
+
+/*
     Get number of pages per block in SSD
 
     PARAMS

@@ -69,3 +69,13 @@ SSD *ssd_create_toshibaVX500(void)
 
     return ssd;
 }
+
+void ssd_destroy(SSD *ssd)
+{
+    TRACE();
+
+    if (ssd == NULL)
+        return;
+
+    FREE(ssd);
+}
