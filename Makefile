@@ -80,6 +80,8 @@ $(EXEC): libs $(OBJS)
 clean:
 	$(call print_info,Cleaning)
 	$(Q)rm -f $(OBJS)
-	$(Q)rm -rf $(EDIR)/*
 	$(Q)rm -f $(EXEC)
+
+clean_libs:
+	$(Q)rm -rf $(EDIR)/*
 	$(Q)cd $(SUBDIR)/MyLibs && $(MAKE) clean --no-print-directory
