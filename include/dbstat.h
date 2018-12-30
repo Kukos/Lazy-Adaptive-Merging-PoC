@@ -84,6 +84,39 @@ void db_stat_reset(void);
 void db_stat_reset_querry(void);
 
 /*
+    Start new querry
+
+    PARAMS
+    NO PARAMS
+
+    RETURN
+    This is a void function
+*/
+void db_stat_start_querry(void);
+
+/*
+    Print on stdout info about current querry
+
+    PARAMS
+    NO PARAMS
+
+    RETURN
+    This is a void function
+*/
+void db_stat_current_print(void);
+
+/*
+    Print on stdout info about total, min, max querry
+
+    PARAMS
+    NO PARAMS
+
+    RETURN
+    This is a void function
+*/
+void db_stat_summary_print(void);
+
+/*
     Update statistics (read / write / erase) for current querry
 
     PARAMS
