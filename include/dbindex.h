@@ -13,6 +13,11 @@
     5. Seq Search Time = H + P(N)
     6. Delete Time = H
     7. Update Time =  Search + Insert Time
+
+    Author: Michal Kukowski
+    email: michalkukowski10@gmail.com
+
+    LICENCE GPL 3.0
 */
 
 #include <compiler.h>

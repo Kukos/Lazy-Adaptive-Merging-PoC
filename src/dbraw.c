@@ -3,8 +3,7 @@
 #include <dbstat.h>
 #include <common.h>
 #include <stdlib.h>
-
-#define DB_RAW_INT_CEIL_DIV(n, k) (((n) + (k) - 1) / (k))
+#include <dbutils.h>
 
 /*
     PARAMS
@@ -27,12 +26,12 @@ static ___inline___ size_t db_raw_pages_for_entries(DB_raw *raw, size_t entries)
 
 static ___inline___ size_t db_raw_entries_per_page(DB_raw *raw)
 {
-    return DB_RAW_INT_CEIL_DIV(raw->ssd->page_size, raw->entry_size);
+    return db_utils_entries_per_page(raw->ssd->page_size, raw->entry_size);
 }
 
 static ___inline___ size_t db_raw_pages_for_entries(DB_raw *raw, size_t entries)
 {
-    return DB_RAW_INT_CEIL_DIV(entries, db_raw_entries_per_page(raw));
+    return db_utils_pages_for_entries(raw->ssd->page_size, raw->entry_size, entries);
 }
 
 DB_raw *db_raw_create(SSD *ssd, size_t entry_size)
@@ -67,8 +66,11 @@ double db_raw_insert(DB_raw *raw, size_t entries)
 {
     double time = 0.0;
     size_t i;
+    size_t pages;
 
     TRACE();
+
+    pages = db_raw_pages_for_entries(raw, raw->num_entries);
 
     for (i = 0; i < entries; ++i)
     {
@@ -78,7 +80,8 @@ double db_raw_insert(DB_raw *raw, size_t entries)
         ++raw->num_entries;
     }
 
-    db_stat_update_mem((ssize_t)(raw->entry_size * entries));
+    pages = db_raw_pages_for_entries(raw, raw->num_entries) - pages;
+    db_stat_update_mem((ssize_t)(pages * raw->ssd->page_size));
 
     return time;
 }
@@ -86,14 +89,18 @@ double db_raw_insert(DB_raw *raw, size_t entries)
 double db_raw_bulkload(DB_raw *raw, size_t entries)
 {
     double time = 0.0;
+    size_t pages;
 
     TRACE();
+
+    pages = db_raw_pages_for_entries(raw, raw->num_entries);
 
     /* insert at the end */
     time += ssd_swrite_pages(raw->ssd, db_raw_pages_for_entries(raw, entries));
     raw->num_entries += entries;
 
-    db_stat_update_mem((ssize_t)(raw->entry_size * entries));
+    pages = db_raw_pages_for_entries(raw, raw->num_entries) - pages;
+    db_stat_update_mem((ssize_t)(pages * raw->ssd->page_size));
 
     return time;
 }
@@ -129,8 +136,11 @@ double db_raw_range_search(DB_raw *raw, size_t entries)
 double db_raw_delete(DB_raw *raw, size_t entries)
 {
     double time = 0.0;
+    size_t pages;
 
     TRACE();
+
+    pages = db_raw_pages_for_entries(raw, raw->num_entries);
 
     /* data are unsorted, so scan all */
     time += ssd_sread_pages(raw->ssd, db_raw_pages_for_entries(raw, raw->num_entries) - db_raw_pages_for_entries(raw, entries));
@@ -140,7 +150,8 @@ double db_raw_delete(DB_raw *raw, size_t entries)
 
     raw->num_entries -= entries;
 
-    db_stat_update_mem(-1 * (ssize_t)(raw->entry_size * entries));
+    pages = db_raw_pages_for_entries(raw, raw->num_entries) - pages;
+    db_stat_update_mem(-1 * (ssize_t)(pages * raw->ssd->page_size));
 
     return time;
 }

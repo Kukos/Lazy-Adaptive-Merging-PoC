@@ -21,10 +21,11 @@ static ___inline___ void __db_stat_print(DB_snapshot *sh);
 
 static ___inline___ void __db_stat_print(DB_snapshot *sh)
 {
-    printf("\tMEMORY USAGE  = %zuB\n", sh->memory_usage);
-    printf("\tREAD TIME     = %lfs\n", sh->read_time);
-    printf("\tWRITE TIME    = %lfs\n", sh->write_time);
-    printf("\tERASE TIME    = %lfs\n", sh->erase_time);
+    printf("\tMEMORY USAGE   = %zuB\n", sh->memory_usage);
+    printf("\tREAD  TIME     = %lfs\n", sh->read_time);
+    printf("\tWRITE TIME     = %lfs\n", sh->write_time);
+    printf("\tERASE TIME     = %lfs\n", sh->erase_time);
+    printf("\tTOTAL TIME     = %lfs\n", __db_stat_get_time(sh));
 }
 
 void db_stat_reset(void)

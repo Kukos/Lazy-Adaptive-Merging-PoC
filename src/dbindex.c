@@ -3,8 +3,7 @@
 #include <ssd.h>
 #include <math.h>
 #include <stdlib.h>
-
-#define DB_INDEX_INT_CEIL_DIV(n, k) (((n) + (k) - 1) / (k))
+#include <dbutils.h>
 
 #define DB_INDEX_LOG(n, k) (log(n) / log(k))
 
@@ -47,12 +46,15 @@ static ___inline___ size_t db_index_get_hight(DB_index *index)
 
 static ___inline___ size_t db_index_entries_per_page(DB_index *index)
 {
-    return DB_INDEX_INT_CEIL_DIV(index->ssd->page_size, index->entry_size);
+    return db_utils_entries_per_page(index->ssd->page_size, index->entry_size);
 }
 
 static ___inline___ size_t db_index_pages_for_entries(DB_index *index, size_t entries)
 {
-    return DB_INDEX_INT_CEIL_DIV(entries, db_index_entries_per_page(index));
+    const size_t pages_for_entries = db_utils_pages_for_entries(index->ssd->page_size, index->entry_size, entries);
+    const size_t pages_for_pointers = db_utils_pages_for_entries(index->ssd->page_size, index->key_size + sizeof(void *), pages_for_entries);
+
+    return pages_for_entries + pages_for_pointers;
 }
 
 DB_index *db_index_create(SSD *ssd, size_t key_size, size_t entry_size)
@@ -108,7 +110,7 @@ double db_index_insert(DB_index *index, size_t entries)
 
     /* diff in pages */
     pages = db_index_pages_for_entries(index, index->num_entries) - pages;
-    db_stat_update_mem((ssize_t)(pages * (sizeof(void *) + index->key_size) + (index->entry_size * entries)));
+    db_stat_update_mem((ssize_t)(pages * index->ssd->page_size));
 
     return time;
 }
@@ -128,12 +130,12 @@ double db_index_bulkload(DB_index *index, size_t entries)
     /* insert pointer to subtree */
     time += db_index_insert(index, 1);
 
-    index->num_entries += entries;
+    index->num_entries += entries - 1;
     index->hight = db_index_get_hight(index);
 
     /* diff in pages */
     pages = db_index_pages_for_entries(index, index->num_entries) - pages;
-    db_stat_update_mem((ssize_t)(pages * (sizeof(void *) + index->key_size) + (index->entry_size * entries)));
+    db_stat_update_mem((ssize_t)(pages * index->ssd->page_size));
 
     return time;
 }
@@ -187,7 +189,7 @@ double db_index_delete(DB_index *index, size_t entries)
 
     /* diff in pages */
     pages = pages - db_index_pages_for_entries(index, index->num_entries);
-    db_stat_update_mem(-1 * (ssize_t)(pages * (sizeof(void *) + index->key_size) + (index->entry_size * entries)));
+    db_stat_update_mem(-1 * (ssize_t)(pages * index->ssd->page_size));
 
     return time;
 }
