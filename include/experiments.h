@@ -26,7 +26,7 @@
         8. Nlog(N) range search with 5% selectivity
 
     PARAMS
-    @IN queries - number of quersies in batch (N)
+    @IN queries - number of queries in batch (N)
 
     RETURN
     This is a void function
@@ -47,12 +47,23 @@ void db_index_experiment_workload(size_t querries);
         8. Nlog(N) range search with 5% selectivity
 
     PARAMS
-    @IN queries - number of quersies in batch (N)
+    @IN queries - number of queries in batch (N)
 
     RETURN
     This is a void function
 */
 void db_raw_experiment_workload(size_t querries);
 
+
+/*
+    This is only test workload for db lam to check all of functions
+
+    PARAMS
+    @IN queries - number od queries in batch (N)
+
+    RETURN
+    This is a void function
+*/
+void db_lam_experiment_workload(size_t querries);
 
 #endif
