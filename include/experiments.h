@@ -12,6 +12,7 @@
 
 #include <stddef.h>
 #include <compiler.h>
+#include <dbutils.h>
 
 /*
     Normal workload experiment
@@ -65,5 +66,8 @@ void db_raw_experiment_workload(size_t querries);
     This is a void function
 */
 void db_lam_experiment_workload(size_t querries);
+
+
+void experiment1(size_t key_size, size_t data_size, size_t entries, querry_t type, double selectivity);
 
 #endif

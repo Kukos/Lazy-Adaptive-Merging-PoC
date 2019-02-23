@@ -141,6 +141,17 @@ static ___inline___ void db_stat_update_erase(double s);
 static ___inline___ void db_stat_update_mem(ssize_t b);
 
 /*
+    Set usage of memory for current querry
+
+    PARAMS
+    @IN b - bytes
+
+    RETURN
+    This is a void function
+*/
+static ___inline___ void db_stat_set_mem(size_t b);
+
+/*
     Finish current querry and update total, max, min statistics
 
     PARAMS
@@ -240,5 +251,9 @@ static ___inline___ size_t db_stat_get_total_mem_usage(void)
     return __db_stat_get_mem_usage(&db_total);
 }
 
+static ___inline___ void db_stat_set_mem(size_t b)
+{
+    db_current_querry.memory_usage = b;
+}
 
 #endif

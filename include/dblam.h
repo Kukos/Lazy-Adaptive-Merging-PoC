@@ -59,6 +59,9 @@ typedef struct DB_LAM
     size_t sort_buffer_size;
     size_t merge_treshold;
 
+    double usage_treshold;
+    size_t max_blocks_in_reorganization;
+
 } DB_LAM;
 
 
@@ -72,12 +75,13 @@ typedef struct DB_LAM
     @IN entry_size - size of entry in Bytes
     @IN bs - buffer size (size in blocks)
     @IN mt - merge treshold (size in blocks)
+    @IN ut - usage treshold
+    @IN max_in_reorganization - maximum number of blocks in one reorganization
 
     RETURN
     Pointer to new raw Table
 */
-DB_LAM *db_lam_create(SSD *ssd, size_t num_entries, size_t key_size, size_t entry_size, size_t bs, size_t mt);
-
+DB_LAM *db_lam_create(SSD *ssd, size_t num_entries, size_t key_size, size_t entry_size, size_t bs, size_t mt, double ut, size_t max_in_reorganization);
 /*
     Destroy LAM system
 

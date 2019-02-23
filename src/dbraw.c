@@ -58,7 +58,6 @@ void db_raw_destroy(DB_raw *raw)
     if (raw == NULL)
         return;
 
-    ssd_destroy(raw->ssd);
     FREE(raw);
 }
 

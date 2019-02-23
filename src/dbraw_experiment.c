@@ -83,4 +83,5 @@ void db_raw_experiment_workload(size_t querries)
 
     db_stat_summary_print();
     db_raw_destroy(raw);
+    ssd_destroy(ssd);
 }

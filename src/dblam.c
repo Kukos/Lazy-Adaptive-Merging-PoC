@@ -11,7 +11,7 @@
 
 /* to avoid reorganization with almost full leb */
 #define USAGE_TRESHOLD 0.05
-#define MAX_LEB_IN_REORGANIZATION 5
+#define MAX_LEB_IN_REORGANIZATION 10
 
 /* wrappers needed for darray */
 static int __partition_cmp(const void *a, const void *b);
@@ -193,6 +193,28 @@ static bool can_do_reorganization(DB_LAM *lam);
 */
 static double db_lam_reorganization(DB_LAM *lam);
 
+/*
+    Copy all entries from lam to index
+
+    PARAMS
+    @IN LAM - pointer to LAM system
+
+    RETURN
+    Consumed time
+*/
+static ___inline___ double db_lam_write_all_to_index(DB_LAM *lam);
+
+/*
+    Calculate memory usage and set mem usage via db stat framework
+
+    PARAMS
+    @IN lam - pointer to LAM system
+
+    RETURN
+    This is a void function
+*/
+static ___inline___ void db_lam_calculate_mem_usage(DB_LAM *lam);
+
 static size_t rand_leb_posision(Partition *p, size_t entries)
 {
     ssize_t entries_to_load;
@@ -222,7 +244,7 @@ static ___inline___ double leb_usage(DB_LAM *lam, LEB *leb)
 
 static ___inline___ bool leb_to_delete(DB_LAM *lam, LEB *leb)
 {
-    return leb_usage(lam, leb) >= USAGE_TRESHOLD;
+    return leb_usage(lam, leb) >= lam->usage_treshold;
 }
 
 static ___inline___ size_t db_lam_entries_per_page(DB_LAM *lam)
@@ -399,7 +421,7 @@ static double create_partitions_for_entries(DB_LAM *lam, size_t entries)
 
         /* write partition */
         time += ssd_swrite_pages(lam->ssd, db_lam_pages_for_entries(lam, p->num_entries));
-        db_stat_update_mem((ssize_t)(lam->ssd->page_size * db_lam_pages_for_entries(lam, p->num_entries)));
+        //db_stat_update_mem((ssize_t)(lam->ssd->page_size * db_lam_pages_for_entries(lam, p->num_entries)));
     }
 
     return time;
@@ -432,47 +454,6 @@ static double db_lam_init(DB_LAM *lam, size_t entries)
     return time;
 }
 
-DB_LAM *db_lam_create(SSD *ssd, size_t num_entries, size_t key_size, size_t entry_size, size_t bs, size_t mt)
-{
-    DB_LAM *lam;
-
-    TRACE();
-
-    lam = (DB_LAM *)malloc(sizeof(DB_LAM));
-    if (lam == NULL)
-        ERROR("malloc error\n", NULL);
-
-    lam->num_entries = num_entries;
-    lam->entry_size = entry_size;
-    lam->ssd = ssd;
-    lam->sort_buffer_size = bs;
-    lam->merge_treshold = mt;
-    lam->set.num_entries = 0;
-    lam->set.partitions = NULL;
-
-    lam->index = db_index_create(ssd, key_size, entry_size);
-    if (lam->index == NULL)
-        ERROR("db_index_create error\n", NULL);
-
-    return lam;
-}
-
-void db_lam_destroy(DB_LAM *lam)
-{
-    TRACE();
-
-    if (lam == NULL)
-        return;
-
-    /* SSD will be destroyed here */
-    db_index_destroy(lam->index);
-
-    if (lam->set.partitions != NULL)
-        darray_destroy_with_entries(lam->set.partitions);
-
-    FREE(lam);
-}
-
 static ___inline___ void unlink_leb(LEB *leb)
 {
     size_t i;
@@ -497,13 +478,16 @@ static bool can_do_reorganization(DB_LAM *lam)
 
     TRACE();
 
+    if (lam->set.num_entries == 0)
+        return false;
+
     blocks = lam_get_blocks(lam);
     num_blocks = lam_num_blocks(lam);
 
     insort(blocks, num_blocks, __block_cmp, sizeof(LEB *));
 
     trash = 0.0;
-    for (i = 0; i < MIN((size_t)MAX_LEB_IN_REORGANIZATION, num_blocks); ++i)
+    for (i = 0; i < MIN(lam->max_blocks_in_reorganization, num_blocks); ++i)
         if (leb_to_delete(lam, blocks[i]))
             trash += leb_usage(lam, blocks[i]);
 
@@ -527,7 +511,7 @@ static double db_lam_reorganization(DB_LAM *lam)
     insort(blocks, num_blocks, __block_cmp, sizeof(LEB *));
 
     entries = 0;
-    for (i = 0; i < MIN((size_t)MAX_LEB_IN_REORGANIZATION, num_blocks); ++i)
+    for (i = 0; i < MIN(lam->max_blocks_in_reorganization, num_blocks); ++i)
         if (leb_to_delete(lam, blocks[i]))
         {
             /* load entries into buffer */
@@ -539,9 +523,9 @@ static double db_lam_reorganization(DB_LAM *lam)
             /* erase block */
             time += ssd_erase_blocks(lam->ssd, 1);
 
-            lam->set.num_entries -= entries;
+            lam->set.num_entries -= blocks[i]->valid_entries;
 
-            db_stat_update_mem(-1 * (ssize_t)(db_lam_pages_for_entries(lam, blocks[i]->invalid_entries + blocks[i]->valid_entries) * lam->ssd->page_size));
+            //db_stat_update_mem(-1 * (ssize_t)(db_lam_pages_for_entries(lam, blocks[i]->invalid_entries + blocks[i]->valid_entries) * lam->ssd->page_size));
 
             FREE(blocks[i]);
         }
@@ -645,6 +629,7 @@ static ___inline___ double load_entries_from_partition(DB_LAM *lam, querry_t typ
     size_t leb_num;
     size_t i;
     size_t loaded_pages = 0;
+    size_t c = 0;
 
     TRACE();
 
@@ -656,7 +641,9 @@ static ___inline___ double load_entries_from_partition(DB_LAM *lam, querry_t typ
     for_each_data(lam->set.partitions, Darray, p)
     {
         entries_read_from_this_partition = MIN(p->num_entries, INT_CEIL_DIV(entries, ((size_t)darray_get_num_entries(lam->set.partitions) - i)));
+        entries_read_from_this_partition = MIN(entries_read_from_this_partition, entries);
         entries -= entries_read_from_this_partition;
+        c += entries_read_from_this_partition;
         ++i;
 
         if (entries_read_from_this_partition == 0)
@@ -701,6 +688,91 @@ static ___inline___ double load_entries_from_partition(DB_LAM *lam, querry_t typ
     return time;
 }
 
+static ___inline___ double db_lam_write_all_to_index(DB_LAM *lam)
+{
+    double time = 0.0;
+    Partition *p;
+
+    TRACE();
+
+    time += ssd_erase_blocks(lam->ssd, db_lam_blocks_for_entries(lam, lam->set.num_entries));
+    time += copy_entries_to_index(lam, lam->set.num_entries);
+    //db_stat_update_mem(-1 * (ssize_t)(db_lam_pages_for_entries(lam, lam->set.num_entries) * lam->ssd->page_size));
+
+    lam->set.num_entries = 0;
+    for_each_data(lam->set.partitions, Darray, p)
+        p->num_entries = p->num_blocks = 0;
+
+    return time;
+}
+
+static ___inline___ void db_lam_calculate_mem_usage(DB_LAM *lam)
+{
+    size_t memory = 0;
+    Partition *p;
+    size_t i;
+    size_t entries = 0;
+    size_t pages_for_index = 0;
+
+    TRACE();
+
+    pages_for_index = db_utils_pages_for_entries(lam->ssd->page_size, lam->index->entry_size, lam->index->num_entries);
+    pages_for_index += db_utils_pages_for_entries(lam->ssd->page_size, lam->index->key_size + sizeof(void *), pages_for_index);
+    memory += pages_for_index * lam->ssd->page_size;
+
+    entries = 0;
+    for_each_data(lam->set.partitions, Darray, p)
+        for (i = 0; i < p->num_blocks; ++i)
+            if (p->blocks[i] != NULL)
+                entries += p->blocks[i]->invalid_entries + p->blocks[i]->valid_entries;
+
+    memory += db_lam_pages_for_entries(lam, entries) * lam->ssd->page_size;
+    db_stat_set_mem(memory);
+}
+
+DB_LAM *db_lam_create(SSD *ssd, size_t num_entries, size_t key_size, size_t entry_size, size_t bs, size_t mt, double ut, size_t max_in_reorganization)
+{
+    DB_LAM *lam;
+
+    TRACE();
+
+    lam = (DB_LAM *)malloc(sizeof(DB_LAM));
+    if (lam == NULL)
+        ERROR("malloc error\n", NULL);
+
+    lam->num_entries = num_entries;
+    lam->entry_size = entry_size;
+    lam->ssd = ssd;
+    lam->sort_buffer_size = bs;
+    lam->merge_treshold = mt;
+    lam->set.num_entries = 0;
+    lam->set.partitions = NULL;
+    lam->usage_treshold = ut;
+    lam->max_blocks_in_reorganization = max_in_reorganization;
+
+    lam->index = db_index_create(ssd, key_size, entry_size);
+    if (lam->index == NULL)
+        ERROR("db_index_create error\n", NULL);
+
+    return lam;
+}
+
+void db_lam_destroy(DB_LAM *lam)
+{
+    TRACE();
+
+    if (lam == NULL)
+        return;
+
+    db_index_destroy(lam->index);
+
+    if (lam->set.partitions != NULL)
+        darray_destroy_with_entries(lam->set.partitions);
+
+    FREE(lam);
+}
+
+
 double db_lam_search(DB_LAM *lam, querry_t type, size_t entries)
 {
     double time = 0.0;
@@ -712,6 +784,7 @@ double db_lam_search(DB_LAM *lam, querry_t type, size_t entries)
     if (lam->index->num_entries == 0 && lam->set.partitions == NULL)
     {
         time += db_lam_init(lam, entries);
+        db_lam_calculate_mem_usage(lam);
         return time;
     }
 
@@ -730,6 +803,11 @@ double db_lam_search(DB_LAM *lam, querry_t type, size_t entries)
     /* check if reorganization is needed */
     if (can_do_reorganization(lam))
         time += db_lam_reorganization(lam);
+
+    if (db_lam_blocks_for_entries(lam, lam->set.num_entries) <= lam->merge_treshold)
+        time += db_lam_write_all_to_index(lam);
+
+    db_lam_calculate_mem_usage(lam);
 
     return time;
 }
@@ -768,6 +846,11 @@ double db_lam_delete(DB_LAM *lam, size_t entries)
     if (can_do_reorganization(lam))
         time += db_lam_reorganization(lam);
 
+    if (db_lam_blocks_for_entries(lam, lam->set.num_entries) <= lam->merge_treshold)
+        time += db_lam_write_all_to_index(lam);
+
+    db_lam_calculate_mem_usage(lam);
+
     return time;
 }
 
@@ -779,6 +862,8 @@ double db_lam_update(DB_LAM *lam, size_t entries)
 
     time += db_lam_delete(lam, entries);
     time += db_lam_insert(lam, entries);
+
+    db_lam_calculate_mem_usage(lam);
 
     return time;
 }

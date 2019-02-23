@@ -41,7 +41,7 @@ void db_lam_experiment_workload(size_t querries)
     sgenrand((unsigned long)time(NULL));
 
     ssd = ssd_create_samsung840();
-    lam = db_lam_create(ssd, querries, sizeof(int), 140, 10, 4);
+    lam = db_lam_create(ssd, querries, sizeof(int), 140, 10, 4, 0.05, 10);
     db_stat_reset();
 
     db_stat_start_querry();
@@ -86,4 +86,5 @@ void db_lam_experiment_workload(size_t querries)
     db_stat_summary_print();
 
     db_lam_destroy(lam);
+    ssd_destroy(ssd);
 }

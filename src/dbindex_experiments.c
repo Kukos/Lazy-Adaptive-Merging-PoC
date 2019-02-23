@@ -83,4 +83,5 @@ void db_index_experiment_workload(size_t querries)
 
     db_stat_summary_print();
     db_index_destroy(index);
+    ssd_destroy(ssd);
 }

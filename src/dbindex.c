@@ -81,7 +81,6 @@ void db_index_destroy(DB_index *index)
     if (index == NULL)
         return;
 
-    ssd_destroy(index->ssd);
     FREE(index);
 }
 
