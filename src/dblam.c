@@ -9,10 +9,6 @@
 #include <genrand.h>
 #include <sort.h>
 
-/* to avoid reorganization with almost full leb */
-#define USAGE_TRESHOLD 0.05
-#define MAX_LEB_IN_REORGANIZATION 10
-
 /* wrappers needed for darray */
 static int __partition_cmp(const void *a, const void *b);
 static void __partition_destroy(void *a);
@@ -56,16 +52,16 @@ static double create_partitions_for_entries(DB_LAM *lam, size_t entries);
 
 /*
     Random Block position in partition
-    Posision is correct iff from pos to end of p we can read @entries valid entries
+    position is correct iff from pos to end of p we can read @entries valid entries
 
     PARAMS
     @IN p - pointer to partition
     @IN entries - number of entries
 
     RETURN
-    Random posision
+    Random position
 */
-static size_t rand_leb_posision(Partition *p, size_t entries);
+static size_t rand_leb_position(Partition *p, size_t entries);
 
 /*
     Capacity calculator
@@ -215,7 +211,7 @@ static ___inline___ double db_lam_write_all_to_index(DB_LAM *lam);
 */
 static ___inline___ void db_lam_calculate_mem_usage(DB_LAM *lam);
 
-static size_t rand_leb_posision(Partition *p, size_t entries)
+static size_t rand_leb_position(Partition *p, size_t entries)
 {
     ssize_t entries_to_load;
     ssize_t i;
@@ -244,7 +240,8 @@ static ___inline___ double leb_usage(DB_LAM *lam, LEB *leb)
 
 static ___inline___ bool leb_to_delete(DB_LAM *lam, LEB *leb)
 {
-    return leb_usage(lam, leb) >= lam->usage_treshold;
+    const double usage = leb_usage(lam, leb);
+    return usage > 0.0 && usage >= lam->usage_treshold;
 }
 
 static ___inline___ size_t db_lam_entries_per_page(DB_LAM *lam)
@@ -629,7 +626,6 @@ static ___inline___ double load_entries_from_partition(DB_LAM *lam, querry_t typ
     size_t leb_num;
     size_t i;
     size_t loaded_pages = 0;
-    size_t c = 0;
 
     TRACE();
 
@@ -643,7 +639,6 @@ static ___inline___ double load_entries_from_partition(DB_LAM *lam, querry_t typ
         entries_read_from_this_partition = MIN(p->num_entries, INT_CEIL_DIV(entries, ((size_t)darray_get_num_entries(lam->set.partitions) - i)));
         entries_read_from_this_partition = MIN(entries_read_from_this_partition, entries);
         entries -= entries_read_from_this_partition;
-        c += entries_read_from_this_partition;
         ++i;
 
         if (entries_read_from_this_partition == 0)
@@ -655,7 +650,7 @@ static ___inline___ double load_entries_from_partition(DB_LAM *lam, querry_t typ
         if (type == QUERRY_SEQUENTIAL_PATTERN)
             leb_num = p->last_loaded_block;
         else
-            leb_num = rand_leb_posision(p, entries_read_from_this_partition);
+            leb_num = rand_leb_position(p, entries_read_from_this_partition);
 
         p->num_entries -= entries_read_from_this_partition;
         lam->set.num_entries -= entries_read_from_this_partition;
@@ -846,7 +841,7 @@ double db_lam_delete(DB_LAM *lam, size_t entries)
     if (can_do_reorganization(lam))
         time += db_lam_reorganization(lam);
 
-    if (db_lam_blocks_for_entries(lam, lam->set.num_entries) <= lam->merge_treshold)
+    if (db_lam_blocks_for_entries(lam, lam->set.num_entries) <= lam->sort_buffer_size)
         time += db_lam_write_all_to_index(lam);
 
     db_lam_calculate_mem_usage(lam);
