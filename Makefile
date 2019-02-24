@@ -81,6 +81,8 @@ clean:
 	$(call print_info,Cleaning)
 	$(Q)rm -f $(OBJS)
 	$(Q)rm -f $(EXEC)
+	$(Q)rm -f *.png
+	$(Q)rm -f *.txt
 
 clean_libs:
 	$(Q)rm -rf $(EDIR)/*

@@ -67,7 +67,17 @@ void db_raw_experiment_workload(size_t querries);
 */
 void db_lam_experiment_workload(size_t querries);
 
+/*
+    This is only test workload for db la to check all of functions
+
+    PARAMS
+    @IN queries - number od queries in batch (N)
+
+    RETURN
+    This is a void function
+*/
+void db_am_experiment_workload(size_t querries);
 
 void experiment1(const char const *file, size_t key_size, size_t data_size, size_t entries, querry_t type, double selectivity);
-
+void experiment2(const char const *file, size_t key_size, size_t data_size, size_t entries, querry_t type, double selectivity);
 #endif
