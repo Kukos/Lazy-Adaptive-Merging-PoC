@@ -31,6 +31,8 @@ typedef struct SSD
     size_t block_size; /* in bytes */
 
     size_t dirty_pages;
+
+    const char *name;
 } SSD;
 
 /*

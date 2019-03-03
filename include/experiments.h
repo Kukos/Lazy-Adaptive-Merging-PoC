@@ -13,6 +13,7 @@
 #include <stddef.h>
 #include <compiler.h>
 #include <dbutils.h>
+#include <ssd.h>
 
 /*
     Normal workload experiment
@@ -78,6 +79,9 @@ void db_lam_experiment_workload(size_t querries);
 */
 void db_am_experiment_workload(size_t querries);
 
-void experiment1(const char const *file, size_t key_size, size_t data_size, size_t entries, querry_t type, double selectivity);
-void experiment2(const char const *file, size_t key_size, size_t data_size, size_t entries, querry_t type, double selectivity);
+void experiment1(const char const *file, SSD *ssd, size_t key_size, size_t data_size, size_t entries, querry_t type, double selectivity);
+void experiment2(const char const *file, SSD *ssd, size_t key_size, size_t data_size, size_t entries, querry_t type, double selectivity);
+void experiment3(const char const *file, SSD *ssd, size_t key_size, size_t data_size, size_t entries, querry_t type, double selectivity, size_t querries);
+void experiment4(const char const *file, SSD *ssd, size_t key_size, size_t data_size, size_t entries, querry_t type, double selectivity, size_t querries);
+void experiment5(const char const *file, SSD *ssd, size_t key_size, size_t data_size, size_t entries, querry_t type, double selectivity[], size_t selectivity_len, size_t querries);
 #endif
