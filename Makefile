@@ -83,6 +83,7 @@ clean:
 	$(Q)rm -f $(EXEC)
 	$(Q)rm -f *.png
 	$(Q)rm -f *.txt
+	$(Q)rm -f *.pdf
 
 clean_libs:
 	$(Q)rm -rf $(EDIR)/*
