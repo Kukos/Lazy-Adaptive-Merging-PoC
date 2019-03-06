@@ -289,7 +289,7 @@ void experiment5(const char const *file, SSD *ssd, size_t key_size, size_t data_
     snprintf(file_name, 1024, "%s_%s.txt", file, ssd->name);
     fd = open(file_name, O_CREAT | O_TRUNC | O_RDWR | O_APPEND, 0644);
     setlocale(LC_ALL, "Polish");
-    dprintf(fd, "Selektywność\tLAM Czass\tAM Czas\tLAM Max czas\tAM Max czas\n");
+    dprintf(fd, "Selektywność\tLAM Czas\tAM Czas\tLAM Max czas\tAM Max czas\n");
     for (i = 0; i < selectivity_len; ++i)
     {
         bs = (size_t)((double)(data_size * entries) * 0.01) / ssd->block_size;
