@@ -68,12 +68,12 @@ void db_am_destroy(DB_AM *am);
 
     PARMAS
     @IN am - pointer to AM system
-    @IN type - querry type
+    @IN type - query type
     @IN entries - number of entries to find
 
     RETURN
-    Querry time
+    Query time
 */
-double db_am_search(DB_AM *am, querry_t type, size_t entries);
+double db_am_search(DB_AM *am, query_t type, size_t entries);
 
 #endif

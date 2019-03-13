@@ -14,12 +14,12 @@
 #include <common.h>
 #include <compiler.h>
 
-typedef enum querry_t
+typedef enum query_t
 {
-    QUERRY_RANDOM,
-    QUERRY_ALWAYS_NEW,
-    QUERRY_SEQUENTIAL_PATTERN,
-} querry_t;
+    QUERY_RANDOM,
+    QUERY_ALWAYS_NEW,
+    QUERY_SEQUENTIAL_PATTERN,
+} query_t;
 
 #define INT_CEIL_DIV(n, k) (((n) + (k) - 1) / (k))
 

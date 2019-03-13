@@ -57,17 +57,17 @@ static void partition_destroy(Partition *p);
 static size_t rand_leb_position(Partition *p, size_t entries);
 
 /*
-    Based on querry type calculate number of entries to load from index
+    Based on query type calculate number of entries to load from index
 
     PARAMS
     @IN am - pointer to AM system
-    @IN type - querry type
-    @IN entries - entries needed by querry
+    @IN type - query type
+    @IN entries - entries needed by query
 
     RETURN
     Number of entries to load from index
 */
-static ___inline___ size_t get_num_entries_from_index(DB_AM *am, querry_t type, size_t entries);
+static ___inline___ size_t get_num_entries_from_index(DB_AM *am, query_t type, size_t entries);
 
 /*
     Load entries from index
@@ -250,7 +250,7 @@ static ___inline___ void db_am_calculate_mem_usage(DB_AM *am)
     db_stat_set_mem(memory);
 }
 
-static ___inline___ size_t get_num_entries_from_index(DB_AM *am, querry_t type, size_t entries)
+static ___inline___ size_t get_num_entries_from_index(DB_AM *am, query_t type, size_t entries)
 {
     size_t entries_from_index = 0;
     size_t i;
@@ -260,7 +260,7 @@ static ___inline___ size_t get_num_entries_from_index(DB_AM *am, querry_t type, 
 
     switch (type)
     {
-        case QUERRY_ALWAYS_NEW:
+        case QUERY_ALWAYS_NEW:
         {
             if (am->set.num_entries >= entries)
                 entries_from_index = 0;
@@ -268,7 +268,7 @@ static ___inline___ size_t get_num_entries_from_index(DB_AM *am, querry_t type, 
                 entries_from_index = entries - am->set.num_entries;
             break;
         }
-        case QUERRY_RANDOM:
+        case QUERY_RANDOM:
         {
             entries_from_index = 0;
             for (i = 0; i < entries; ++i)
@@ -279,7 +279,7 @@ static ___inline___ size_t get_num_entries_from_index(DB_AM *am, querry_t type, 
             }
             break;
         }
-        case QUERRY_SEQUENTIAL_PATTERN:
+        case QUERY_SEQUENTIAL_PATTERN:
         {
             if (am->num_entries == am->index->num_entries)
                 entries_from_index = entries;
@@ -290,13 +290,13 @@ static ___inline___ size_t get_num_entries_from_index(DB_AM *am, querry_t type, 
         }
         default:
         {
-            ERROR("Incorrect querry type\n", 0);
+            ERROR("Incorrect query type\n", 0);
             break;
         }
     }
 
     /*
-        from_index = distribution based on querry
+        from_index = distribution based on query
         from_part = entries - from_index
 
         from_index <= am->index->num_entries
@@ -407,7 +407,7 @@ static double db_am_init(DB_AM *am, size_t entries)
     return time;
 }
 
-static ___inline___ double load_entries_from_partition(DB_AM *am, querry_t type, size_t entries)
+static ___inline___ double load_entries_from_partition(DB_AM *am, query_t type, size_t entries)
 {
     double time = 0.0;
     Partition *p;
@@ -439,7 +439,7 @@ static ___inline___ double load_entries_from_partition(DB_AM *am, querry_t type,
         /* find block using binary search */
         loaded_pages = LOG2((p->num_blocks * (am->ssd->block_size / am->ssd->page_size))) - 1;
 
-        if (type == QUERRY_SEQUENTIAL_PATTERN)
+        if (type == QUERY_SEQUENTIAL_PATTERN)
             leb_num = p->last_loaded_block;
         else
             leb_num = rand_leb_position(p, entries_read_from_this_partition);
@@ -534,7 +534,7 @@ void db_am_destroy(DB_AM *am)
     FREE(am);
 }
 
-double db_am_search(DB_AM *am, querry_t type, size_t entries)
+double db_am_search(DB_AM *am, query_t type, size_t entries)
 {
     double time = 0.0;
     size_t entries_from_index;

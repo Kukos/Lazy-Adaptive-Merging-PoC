@@ -11,7 +11,7 @@
 #include <dbam.h>
 #include <locale.h>
 
-void experiment1(const char const *file, SSD *ssd, size_t key_size, size_t data_size, size_t entries, querry_t type, double selectivity)
+void experiment1(const char const *file, SSD *ssd, size_t key_size, size_t data_size, size_t entries, query_t type, double selectivity)
 {
     DB_index *index;
     DB_raw *raw;
@@ -45,38 +45,38 @@ void experiment1(const char const *file, SSD *ssd, size_t key_size, size_t data_
 
     /* time for search from index */
     db_stat_reset();
-    db_stat_start_querry();
+    db_stat_start_query();
     db_index_range_search(index, (size_t)((double)entries * selectivity));
-    db_stat_finish_querry();
+    db_stat_finish_query();
     index_time = db_stat_get_current_time();
     db_stat_summary_print();
 
     /* time for search from raw */
     db_stat_reset();
-    db_stat_start_querry();
+    db_stat_start_query();
     db_raw_range_search(raw, (size_t)((double)entries * selectivity));
-    db_stat_finish_querry();
+    db_stat_finish_query();
     raw_time = db_stat_get_current_time();
     db_stat_summary_print();
 
     db_stat_reset();
     snprintf(file_name, 1024, "%s_%s.txt", file, ssd->name);
     fd = open(file_name, O_CREAT | O_TRUNC | O_RDWR | O_APPEND, 0644);
-    dprintf(fd, "Querry\tFull index\tUnsorted table\tLazy Adaptive Merging\n");
+    dprintf(fd, "Query\tIndex\tScan\tLAM\n");
     i = 0;
     do
     {
-        db_stat_start_querry();
+        db_stat_start_query();
         db_lam_search(lam, type, (size_t)((double)entries * selectivity));
-        db_stat_finish_querry();
+        db_stat_finish_query();
         lam_time = db_stat_get_current_time();
         dprintf(fd, "%zu\t%lf\t%lf\t%lf\n", i, index_time, raw_time, lam_time);
 
-        printf("QUERRY %zu:\tLAM NUM = %zu\n", i, lam->set.num_entries);
+        printf("QUERY %zu:\tLAM NUM = %zu\n", i, lam->set.num_entries);
         ++i;
     } while (lam->set.num_entries > 0);
 
-    printf("AFTER %zu querries we have full index\n", i);
+    printf("AFTER %zu queries we have full index\n", i);
     db_stat_summary_print();
 
     db_index_destroy(index);
@@ -85,7 +85,7 @@ void experiment1(const char const *file, SSD *ssd, size_t key_size, size_t data_
     close(fd);
 }
 
-void experiment2(const char const *file, SSD *ssd, size_t key_size, size_t data_size, size_t entries, querry_t type, double selectivity)
+void experiment2(const char const *file, SSD *ssd, size_t key_size, size_t data_size, size_t entries, query_t type, double selectivity)
 {
     DB_index *index;
     DB_raw *raw;
@@ -123,44 +123,44 @@ void experiment2(const char const *file, SSD *ssd, size_t key_size, size_t data_
 
     /* time for search from index */
     db_stat_reset();
-    db_stat_start_querry();
+    db_stat_start_query();
     db_index_range_search(index, (size_t)((double)entries * selectivity));
-    db_stat_finish_querry();
+    db_stat_finish_query();
     index_time = db_stat_get_current_time();
     db_stat_summary_print();
 
     /* time for search from raw */
     db_stat_reset();
-    db_stat_start_querry();
+    db_stat_start_query();
     db_raw_range_search(raw, (size_t)((double)entries * selectivity));
-    db_stat_finish_querry();
+    db_stat_finish_query();
     raw_time = db_stat_get_current_time();
     db_stat_summary_print();
 
     db_stat_reset();
     snprintf(file_name, 1024, "%s_%s.txt", file, ssd->name);
     fd = open(file_name, O_CREAT | O_TRUNC | O_RDWR | O_APPEND, 0644);
-    dprintf(fd, "Querry\tFull index\tUnsorted table\tLazy Adaptive Merging\tLAM without lazy erase\n");
+    dprintf(fd, "Query\tIndex\tScan\tLAM\tAM\n");
     i = 0;
     do
     {
-        db_stat_start_querry();
+        db_stat_start_query();
         db_lam_search(lam, type, (size_t)((double)entries * selectivity));
-        db_stat_finish_querry();
+        db_stat_finish_query();
         lam_time = db_stat_get_current_time();
 
-        db_stat_start_querry();
+        db_stat_start_query();
         db_am_search(am, type, (size_t)((double)entries * selectivity));
-        db_stat_finish_querry();
+        db_stat_finish_query();
         am_time = db_stat_get_current_time();
 
         dprintf(fd, "%zu\t%lf\t%lf\t%lf\t%lf\n", i, index_time, raw_time, lam_time, am_time);
-        printf("QUERRY %zu:\tAM NUM = %zu\tLAM NUM = %zu\n", i, am->set.num_entries, lam->set.num_entries);
+        printf("QUERY %zu:\tAM NUM = %zu\tLAM NUM = %zu\n", i, am->set.num_entries, lam->set.num_entries);
 
         ++i;
     } while (lam->set.num_entries > 0 || am->set.num_entries > 0);
 
-    printf("AFTER %zu querries we have full index\n", i);
+    printf("AFTER %zu queries we have full index\n", i);
     db_stat_summary_print();
 
     db_index_destroy(index);
@@ -171,7 +171,7 @@ void experiment2(const char const *file, SSD *ssd, size_t key_size, size_t data_
 }
 
 
-void experiment3(const char const *file, SSD *ssd, size_t key_size, size_t data_size, size_t entries, querry_t type, double selectivity, size_t querries)
+void experiment3(const char const *file, SSD *ssd, size_t key_size, size_t data_size, size_t entries, query_t type, double selectivity, size_t queries)
 {
     DB_LAM *lam;
     size_t bs;
@@ -193,7 +193,7 @@ void experiment3(const char const *file, SSD *ssd, size_t key_size, size_t data_
     snprintf(file_name, 1024, "%s_%s.txt", file, ssd->name);
     fd = open(file_name, O_CREAT | O_TRUNC | O_RDWR | O_APPEND, 0644);
     setlocale(LC_ALL, "Polish");
-    dprintf(fd, "Rozmiar bufora\tCałkowity czas\n");
+    dprintf(fd, "Buffer size\tTotal time\n");
     while (frac < 0.1)
     {
         bs = (size_t)((double)(data_size * entries) * frac) / ssd->block_size;
@@ -201,11 +201,11 @@ void experiment3(const char const *file, SSD *ssd, size_t key_size, size_t data_
         printf("BS = %zu, MT = %zu, Ut = %lf, MBR = %zu\n", bs, mt, ut, mbr);
 
         db_stat_reset();
-        for (i = 0; i < querries; ++i)
+        for (i = 0; i < queries; ++i)
         {
-            db_stat_start_querry();
+            db_stat_start_query();
             db_lam_search(lam, type, (size_t)((double)entries * selectivity));
-            db_stat_finish_querry();
+            db_stat_finish_query();
         }
 
         dprintf(fd, "%.3lf\t%lf\n", frac, db_stat_get_total_time());
@@ -216,7 +216,7 @@ void experiment3(const char const *file, SSD *ssd, size_t key_size, size_t data_
     close(fd);
 }
 
-void experiment4(const char const *file, SSD *ssd, size_t key_size, size_t data_size, size_t entries, querry_t type, double selectivity, size_t querries)
+void experiment4(const char const *file, SSD *ssd, size_t key_size, size_t data_size, size_t entries, query_t type, double selectivity, size_t queries)
 {
     DB_LAM *lam;
     size_t bs;
@@ -241,8 +241,8 @@ void experiment4(const char const *file, SSD *ssd, size_t key_size, size_t data_
     fd_time = open(file_time_name, O_CREAT | O_TRUNC | O_RDWR | O_APPEND, 0644);
     fd_mem = open(file_mem_name, O_CREAT | O_TRUNC | O_RDWR | O_APPEND, 0644);
     setlocale(LC_ALL, "Polish");
-    dprintf(fd_time, "Merge Treshold\tMaksymalny czas\tCałkowity czas\n");
-    dprintf(fd_mem, "Merge Treshold\tMaksymalne zużycie pamięci\n");
+    dprintf(fd_time, "Merge Treshold\tMax time\tTotal time\n");
+    dprintf(fd_mem, "Merge Treshold\tMax memory\n");
     while (frac < 0.1)
     {
         mt = (size_t)((double)(data_size * entries) * frac) / ssd->block_size;
@@ -251,16 +251,16 @@ void experiment4(const char const *file, SSD *ssd, size_t key_size, size_t data_
         printf("BS = %zu, MT = %zu, Ut = %lf, MBR = %zu\n", bs, mt, ut, mbr);
 
         db_stat_reset();
-        for (i = 0; i < querries; ++i)
+        for (i = 0; i < queries; ++i)
         {
-            db_stat_start_querry();
+            db_stat_start_query();
             db_lam_search(lam, type, (size_t)((double)entries * selectivity));
-            db_stat_finish_querry();
+            db_stat_finish_query();
         }
 
         mem = db_stat_get_max_mem_usage();
         dprintf(fd_time, "%.3lf\t%lf\t%lf\n", frac, db_stat_get_max_time(), db_stat_get_total_time());
-        dprintf(fd_mem, "%.3lf\t%.2lf\n", frac, (double)mem / (double)(data_size * entries));
+        dprintf(fd_mem, "%.3lf\t%lf\n", frac, (double)mem / (double)(data_size * entries));
         db_lam_destroy(lam);
         frac += 0.001;
     }
@@ -269,7 +269,7 @@ void experiment4(const char const *file, SSD *ssd, size_t key_size, size_t data_
     close(fd_mem);
 }
 
-void experiment5(const char const *file, SSD *ssd, size_t key_size, size_t data_size, size_t entries, querry_t type, double selectivity[], size_t selectivity_len, size_t querries)
+void experiment5(const char const *file, SSD *ssd, size_t key_size, size_t data_size, size_t entries, query_t type, double selectivity[], size_t selectivity_len, size_t queries)
 {
     DB_LAM *lam;
     DB_AM *am;
@@ -289,7 +289,7 @@ void experiment5(const char const *file, SSD *ssd, size_t key_size, size_t data_
     snprintf(file_name, 1024, "%s_%s.txt", file, ssd->name);
     fd = open(file_name, O_CREAT | O_TRUNC | O_RDWR | O_APPEND, 0644);
     setlocale(LC_ALL, "Polish");
-    dprintf(fd, "Selektywność\tLAM Czas\tAM Czas\tLAM Max czas\tAM Max czas\n");
+    dprintf(fd, "Selectivity\tLAM Time\tAM Time\tLAM Max time\tAM Max time\n");
     for (i = 0; i < selectivity_len; ++i)
     {
         bs = (size_t)((double)(data_size * entries) * 0.01) / ssd->block_size;
@@ -303,21 +303,21 @@ void experiment5(const char const *file, SSD *ssd, size_t key_size, size_t data_
         am = db_am_create(ssd, entries, key_size, data_size, bs);
 
         db_stat_reset();
-        for (j = 0; j < querries; ++j)
+        for (j = 0; j < queries; ++j)
         {
-            db_stat_start_querry();
+            db_stat_start_query();
             db_lam_search(lam, type, (size_t)((double)entries * selectivity[i]));
-            db_stat_finish_querry();
+            db_stat_finish_query();
         }
         lam_max_time = db_stat_get_max_time();
         lam_total_time = db_stat_get_total_time();
 
         db_stat_reset();
-        for (j = 0; j < querries; ++j)
+        for (j = 0; j < queries; ++j)
         {
-            db_stat_start_querry();
+            db_stat_start_query();
             db_am_search(am, type, (size_t)((double)entries * selectivity[i]));
-            db_stat_finish_querry();
+            db_stat_finish_query();
         }
         dprintf(fd, "%.2lf\t%lf\t%lf\t%lf\t%lf\n", selectivity[i], lam_total_time, db_stat_get_total_time(), lam_max_time, db_stat_get_max_time());
 

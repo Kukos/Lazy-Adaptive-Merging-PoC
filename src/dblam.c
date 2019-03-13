@@ -97,17 +97,17 @@ static ___inline___ double leb_usage(DB_LAM *lam, LEB *leb);
 static ___inline___ bool leb_to_delete(DB_LAM *lam, LEB *leb);
 
 /*
-    Based on querry type calculate number of entries to load from index
+    Based on query type calculate number of entries to load from index
 
     PARAMS
     @IN lam - pointer to LAM system
-    @IN type - querry type
-    @IN entries - entries needed by querry
+    @IN type - query type
+    @IN entries - entries needed by query
 
     RETURN
     Number of entries to load from index
 */
-static ___inline___ size_t get_num_entries_from_index(DB_LAM *lam, querry_t type, size_t entries);
+static ___inline___ size_t get_num_entries_from_index(DB_LAM *lam, query_t type, size_t entries);
 
 /*
     Load entries from index
@@ -535,7 +535,7 @@ static double db_lam_reorganization(DB_LAM *lam)
     return time;
 }
 
-static ___inline___ size_t get_num_entries_from_index(DB_LAM *lam, querry_t type, size_t entries)
+static ___inline___ size_t get_num_entries_from_index(DB_LAM *lam, query_t type, size_t entries)
 {
     size_t entries_from_index = 0;
     size_t i;
@@ -545,7 +545,7 @@ static ___inline___ size_t get_num_entries_from_index(DB_LAM *lam, querry_t type
 
     switch (type)
     {
-        case QUERRY_ALWAYS_NEW:
+        case QUERY_ALWAYS_NEW:
         {
             if (lam->set.num_entries >= entries)
                 entries_from_index = 0;
@@ -553,7 +553,7 @@ static ___inline___ size_t get_num_entries_from_index(DB_LAM *lam, querry_t type
                 entries_from_index = entries - lam->set.num_entries;
             break;
         }
-        case QUERRY_RANDOM:
+        case QUERY_RANDOM:
         {
             entries_from_index = 0;
             for (i = 0; i < entries; ++i)
@@ -564,7 +564,7 @@ static ___inline___ size_t get_num_entries_from_index(DB_LAM *lam, querry_t type
             }
             break;
         }
-        case QUERRY_SEQUENTIAL_PATTERN:
+        case QUERY_SEQUENTIAL_PATTERN:
         {
             if (lam->num_entries == lam->index->num_entries)
                 entries_from_index = entries;
@@ -575,13 +575,13 @@ static ___inline___ size_t get_num_entries_from_index(DB_LAM *lam, querry_t type
         }
         default:
         {
-            ERROR("Incorrect querry type\n", 0);
+            ERROR("Incorrect query type\n", 0);
             break;
         }
     }
 
     /*
-        from_index = distribution based on querry
+        from_index = distribution based on query
         from_part = entries - from_index
 
         from_index <= lam->index->num_entries
@@ -617,7 +617,7 @@ static ___inline___ double copy_entries_to_index(DB_LAM *lam, size_t entries)
     return 0.0;
 }
 
-static ___inline___ double load_entries_from_partition(DB_LAM *lam, querry_t type, size_t entries)
+static ___inline___ double load_entries_from_partition(DB_LAM *lam, query_t type, size_t entries)
 {
     double time = 0.0;
     Partition *p;
@@ -647,7 +647,7 @@ static ___inline___ double load_entries_from_partition(DB_LAM *lam, querry_t typ
         /* find block using binary search */
         loaded_pages = LOG2((p->num_blocks * (lam->ssd->block_size / lam->ssd->page_size))) - 1;
 
-        if (type == QUERRY_SEQUENTIAL_PATTERN)
+        if (type == QUERY_SEQUENTIAL_PATTERN)
             leb_num = p->last_loaded_block;
         else
             leb_num = rand_leb_position(p, entries_read_from_this_partition);
@@ -768,7 +768,7 @@ void db_lam_destroy(DB_LAM *lam)
 }
 
 
-double db_lam_search(DB_LAM *lam, querry_t type, size_t entries)
+double db_lam_search(DB_LAM *lam, query_t type, size_t entries)
 {
     double time = 0.0;
     size_t entries_from_index;
@@ -828,14 +828,14 @@ double db_lam_delete(DB_LAM *lam, size_t entries)
         return time;
     }
 
-    entries_from_index = get_num_entries_from_index(lam, QUERRY_RANDOM, entries);
+    entries_from_index = get_num_entries_from_index(lam, QUERY_RANDOM, entries);
     entries_from_partition = entries - entries_from_index;
 
     /* delete from index */
     time += db_index_delete(lam->index, entries_from_index);
 
     /* load from partition */
-    time += load_entries_from_partition(lam, QUERRY_RANDOM, entries_from_partition);
+    time += load_entries_from_partition(lam, QUERY_RANDOM, entries_from_partition);
 
     /* check if reorganization is needed */
     if (can_do_reorganization(lam))

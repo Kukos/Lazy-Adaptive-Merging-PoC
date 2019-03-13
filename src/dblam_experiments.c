@@ -30,7 +30,7 @@ static ___unused___ void __debug_lam(DB_LAM *lam)
     }
 }
 
-void db_lam_experiment_workload(size_t querries)
+void db_lam_experiment_workload(size_t queries)
 {
     DB_LAM *lam;
     SSD *ssd;
@@ -41,46 +41,46 @@ void db_lam_experiment_workload(size_t querries)
     sgenrand((unsigned long)time(NULL));
 
     ssd = ssd_create_samsung840();
-    lam = db_lam_create(ssd, querries, sizeof(int), 140, 10, 4, 0.05, 10);
+    lam = db_lam_create(ssd, queries, sizeof(int), 140, 10, 4, 0.05, 10);
     db_stat_reset();
 
-    db_stat_start_querry();
-    db_lam_search(lam, QUERRY_RANDOM, 100);
-    db_stat_finish_querry();
+    db_stat_start_query();
+    db_lam_search(lam, QUERY_RANDOM, 100);
+    db_stat_finish_query();
 
     for (i = 0; i < 100; ++i)
     {
-        db_stat_start_querry();
-        db_lam_search(lam, QUERRY_RANDOM, querries / 1000);
-        db_stat_finish_querry();
+        db_stat_start_query();
+        db_lam_search(lam, QUERY_RANDOM, queries / 1000);
+        db_stat_finish_query();
     }
 
     for (i = 0; i < 100; ++i)
     {
-        db_stat_start_querry();
-        db_lam_insert(lam, querries / 1000);
-        db_stat_finish_querry();
+        db_stat_start_query();
+        db_lam_insert(lam, queries / 1000);
+        db_stat_finish_query();
     }
 
     for (i = 0; i < 100; ++i)
     {
-        db_stat_start_querry();
-        db_lam_delete(lam, querries / 1000);
-        db_stat_finish_querry();
+        db_stat_start_query();
+        db_lam_delete(lam, queries / 1000);
+        db_stat_finish_query();
     }
 
     for (i = 0; i < 100; ++i)
     {
-        db_stat_start_querry();
-        db_lam_update(lam, querries / 1000);
-        db_stat_finish_querry();
+        db_stat_start_query();
+        db_lam_update(lam, queries / 1000);
+        db_stat_finish_query();
     }
 
     for (i = 0; i < 100; ++i)
     {
-        db_stat_start_querry();
-        db_lam_search(lam, QUERRY_RANDOM, querries / 1000);
-        db_stat_finish_querry();
+        db_stat_start_query();
+        db_lam_search(lam, QUERY_RANDOM, queries / 1000);
+        db_stat_finish_query();
     }
 
     db_stat_summary_print();

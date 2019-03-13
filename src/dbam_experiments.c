@@ -30,7 +30,7 @@ static ___unused___ void __debug_am(DB_AM *am)
     }
 }
 
-void db_am_experiment_workload(size_t querries)
+void db_am_experiment_workload(size_t queries)
 {
     DB_AM *am;
     SSD *ssd;
@@ -41,20 +41,20 @@ void db_am_experiment_workload(size_t querries)
     sgenrand((unsigned long)time(NULL));
 
     ssd = ssd_create_samsung840();
-    am = db_am_create(ssd, querries, sizeof(int), 140, 10);
+    am = db_am_create(ssd, queries, sizeof(int), 140, 10);
     db_stat_reset();
 
-    db_stat_start_querry();
-    db_am_search(am, QUERRY_RANDOM, 100);
-    db_stat_finish_querry();
+    db_stat_start_query();
+    db_am_search(am, QUERY_RANDOM, 100);
+    db_stat_finish_query();
 
     for (i = 0; i < 10; ++i)
     {
         __debug_am(am);
-        db_stat_start_querry();
-        db_am_search(am, QUERRY_RANDOM, (size_t)((double)querries * 0.1));
+        db_stat_start_query();
+        db_am_search(am, QUERY_RANDOM, (size_t)((double)queries * 0.1));
         db_stat_current_print();
-        db_stat_finish_querry();
+        db_stat_finish_query();
     }
 
     db_stat_summary_print();

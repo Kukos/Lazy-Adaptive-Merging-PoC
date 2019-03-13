@@ -29,7 +29,7 @@ typedef struct Partition
     size_t num_entries; /* real entries, still valid */
     size_t num_blocks;
 
-    size_t last_loaded_block; /* needed for QUERRY_SEQUENTIAL_PATTERN */
+    size_t last_loaded_block; /* needed for QUERY_SEQUENTIAL_PATTERN */
 
     LEB **blocks;
 } Partition;
@@ -98,13 +98,13 @@ void db_lam_destroy(DB_LAM *lam);
 
     PARMAS
     @IN lam - pointer to LAM system
-    @IN type - querry type
+    @IN type - query type
     @IN entries - number of entries to find
 
     RETURN
-    Querry time
+    Query time
 */
-double db_lam_search(DB_LAM *lam, querry_t type, size_t entries);
+double db_lam_search(DB_LAM *lam, query_t type, size_t entries);
 
 /*
     Insert new entries into LAM
@@ -114,7 +114,7 @@ double db_lam_search(DB_LAM *lam, querry_t type, size_t entries);
     @IN entries - entries to insert
 
     RETURN
-    Querry time
+    Query time
 */
 double db_lam_insert(DB_LAM *lam, size_t entries);
 
@@ -126,7 +126,7 @@ double db_lam_insert(DB_LAM *lam, size_t entries);
     @IN entries - entries to delete
 
     RETURN
-    Querry time
+    Query time
 */
 double db_lam_delete(DB_LAM *lam, size_t entries);
 
@@ -138,7 +138,7 @@ double db_lam_delete(DB_LAM *lam, size_t entries);
     @IN entries - entries to update
 
     RETURN
-    Querry time
+    Query time
 */
 double db_lam_update(DB_LAM *lam, size_t entries);
 

@@ -2,7 +2,7 @@
 #define DBSTAT_H
 
 /*
-    Data base statistics included total time consumptions, memory usage and current querry time
+    Data base statistics included total time consumptions, memory usage and current query time
 
     Author: Michal Kukowski
     email: michalkukowski10@gmail.com
@@ -24,7 +24,7 @@ typedef struct DB_snapshot
     double erase_time;
 } DB_snapshot;
 
-extern DB_snapshot db_current_querry;
+extern DB_snapshot db_current_query;
 extern DB_snapshot db_maximum_snapshot;
 extern DB_snapshot db_minimum_snapshot;
 extern DB_snapshot db_total;
@@ -73,7 +73,7 @@ static ___inline___ size_t __db_stat_get_mem_usage(DB_snapshot *sh)
 void db_stat_reset(void);
 
 /*
-    Reset only current querry statictics
+    Reset only current query statictics
 
     PARAMS
     NO PARAMS
@@ -81,10 +81,10 @@ void db_stat_reset(void);
     RETURN
     This is a void function
 */
-void db_stat_reset_querry(void);
+void db_stat_reset_query(void);
 
 /*
-    Start new querry
+    Start new query
 
     PARAMS
     NO PARAMS
@@ -92,10 +92,10 @@ void db_stat_reset_querry(void);
     RETURN
     This is a void function
 */
-void db_stat_start_querry(void);
+void db_stat_start_query(void);
 
 /*
-    Print on stdout info about current querry
+    Print on stdout info about current query
 
     PARAMS
     NO PARAMS
@@ -106,7 +106,7 @@ void db_stat_start_querry(void);
 void db_stat_current_print(void);
 
 /*
-    Print on stdout info about total, min, max querry
+    Print on stdout info about total, min, max query
 
     PARAMS
     NO PARAMS
@@ -117,7 +117,7 @@ void db_stat_current_print(void);
 void db_stat_summary_print(void);
 
 /*
-    Update statistics (read / write / erase) for current querry
+    Update statistics (read / write / erase) for current query
 
     PARAMS
     @IN s - seconds
@@ -130,7 +130,7 @@ static ___inline___ void db_stat_update_write(double s);
 static ___inline___ void db_stat_update_erase(double s);
 
 /*
-    Update memory usage for current querry
+    Update memory usage for current query
 
     PARAMS
     IN b - bytes (positive if you increased usage, negaive in other case)
@@ -141,7 +141,7 @@ static ___inline___ void db_stat_update_erase(double s);
 static ___inline___ void db_stat_update_mem(ssize_t b);
 
 /*
-    Set usage of memory for current querry
+    Set usage of memory for current query
 
     PARAMS
     @IN b - bytes
@@ -152,7 +152,7 @@ static ___inline___ void db_stat_update_mem(ssize_t b);
 static ___inline___ void db_stat_set_mem(size_t b);
 
 /*
-    Finish current querry and update total, max, min statistics
+    Finish current query and update total, max, min statistics
 
     PARAMS
     NO PARAMS
@@ -160,16 +160,16 @@ static ___inline___ void db_stat_set_mem(size_t b);
     RETURN
     This is a void function
 */
-void db_stat_finish_querry(void);
+void db_stat_finish_query(void);
 
 /*
-    Get querry time (sum of read, write, erase) for (min / max / current) querry and total time
+    Get query time (sum of read, write, erase) for (min / max / current) query and total time
 
     PARAMS
     NO PARAMS
 
     RETURN
-    Querry time
+    Query time
 */
 static ___inline___ double db_stat_get_min_time(void);
 static ___inline___ double db_stat_get_max_time(void);
@@ -177,13 +177,13 @@ static ___inline___ double db_stat_get_current_time(void);
 static ___inline___ double db_stat_get_total_time(void);
 
 /*
-    Get querry memory usage for (min / max / current) querry and total
+    Get query memory usage for (min / max / current) query and total
 
     PARAMS
     NO PARAMS
 
     RETURN
-    Querry memory usage
+    Query memory usage
 */
 static ___inline___ size_t db_stat_get_min_mem_usage(void);
 static ___inline___ size_t db_stat_get_max_mem_usage(void);
@@ -192,23 +192,23 @@ static ___inline___ size_t db_stat_get_total_mem_usage(void);
 
 static ___inline___ void db_stat_update_read(double s)
 {
-    db_current_querry.read_time += s;
+    db_current_query.read_time += s;
 }
 
 static ___inline___ void db_stat_update_write(double s)
 {
-    db_current_querry.write_time += s;
+    db_current_query.write_time += s;
 }
 
 static ___inline___ void db_stat_update_erase(double s)
 {
-    db_current_querry.erase_time += s;
+    db_current_query.erase_time += s;
 }
 
 static ___inline___ void db_stat_update_mem(ssize_t b)
 {
-    const ssize_t memory = (ssize_t)db_current_querry.memory_usage + b;
-    db_current_querry.memory_usage = (size_t)memory;
+    const ssize_t memory = (ssize_t)db_current_query.memory_usage + b;
+    db_current_query.memory_usage = (size_t)memory;
 }
 
 static ___inline___ double db_stat_get_min_time(void)
@@ -223,7 +223,7 @@ static ___inline___ double db_stat_get_max_time(void)
 
 static ___inline___ double db_stat_get_current_time(void)
 {
-    return __db_stat_get_time(&db_current_querry);
+    return __db_stat_get_time(&db_current_query);
 }
 
 static ___inline___ double db_stat_get_total_time(void)
@@ -243,7 +243,7 @@ static ___inline___ size_t db_stat_get_max_mem_usage(void)
 
 static ___inline___ size_t db_stat_get_current_mem_usage(void)
 {
-    return __db_stat_get_mem_usage(&db_current_querry);
+    return __db_stat_get_mem_usage(&db_current_query);
 }
 
 static ___inline___ size_t db_stat_get_total_mem_usage(void)
@@ -253,7 +253,7 @@ static ___inline___ size_t db_stat_get_total_mem_usage(void)
 
 static ___inline___ void db_stat_set_mem(size_t b)
 {
-    db_current_querry.memory_usage = b;
+    db_current_query.memory_usage = b;
 }
 
 #endif
