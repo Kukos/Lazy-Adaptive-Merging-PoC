@@ -62,7 +62,7 @@ void experiment1(const char const *file, SSD *ssd, size_t key_size, size_t data_
     db_stat_reset();
     snprintf(file_name, 1024, "%s_%s.txt", file, ssd->name);
     fd = open(file_name, O_CREAT | O_TRUNC | O_RDWR | O_APPEND, 0644);
-    dprintf(fd, "Query\tIndex\tScan\tLAM\n");
+    dprintf(fd, "Kwerenda\tIndeks\tSkan\tLAM\n");
     i = 0;
     do
     {
@@ -140,7 +140,7 @@ void experiment2(const char const *file, SSD *ssd, size_t key_size, size_t data_
     db_stat_reset();
     snprintf(file_name, 1024, "%s_%s.txt", file, ssd->name);
     fd = open(file_name, O_CREAT | O_TRUNC | O_RDWR | O_APPEND, 0644);
-    dprintf(fd, "Query\tIndex\tScan\tLAM\tAM\n");
+    dprintf(fd, "Kwerenda\tIndeks\tSkan\tLAM\tAM\n");
     i = 0;
     do
     {
@@ -193,7 +193,7 @@ void experiment3(const char const *file, SSD *ssd, size_t key_size, size_t data_
     snprintf(file_name, 1024, "%s_%s.txt", file, ssd->name);
     fd = open(file_name, O_CREAT | O_TRUNC | O_RDWR | O_APPEND, 0644);
     setlocale(LC_ALL, "Polish");
-    dprintf(fd, "Buffer size\tTotal time\n");
+    dprintf(fd, "Rozmiar bufora\tCzas\n");
     while (frac < 0.1)
     {
         bs = (size_t)((double)(data_size * entries) * frac) / ssd->block_size;
@@ -241,8 +241,8 @@ void experiment4(const char const *file, SSD *ssd, size_t key_size, size_t data_
     fd_time = open(file_time_name, O_CREAT | O_TRUNC | O_RDWR | O_APPEND, 0644);
     fd_mem = open(file_mem_name, O_CREAT | O_TRUNC | O_RDWR | O_APPEND, 0644);
     setlocale(LC_ALL, "Polish");
-    dprintf(fd_time, "Merge Treshold\tMax time\tTotal time\n");
-    dprintf(fd_mem, "Merge Treshold\tMax memory\n");
+    dprintf(fd_time, "MT (Merge Treshold)\tMaks czas\tCzas\n");
+    dprintf(fd_mem, "MT (Merge Treshold)\tMaks pamięć\n");
     while (frac < 0.1)
     {
         mt = (size_t)((double)(data_size * entries) * frac) / ssd->block_size;
@@ -289,7 +289,7 @@ void experiment5(const char const *file, SSD *ssd, size_t key_size, size_t data_
     snprintf(file_name, 1024, "%s_%s.txt", file, ssd->name);
     fd = open(file_name, O_CREAT | O_TRUNC | O_RDWR | O_APPEND, 0644);
     setlocale(LC_ALL, "Polish");
-    dprintf(fd, "Selectivity\tLAM Time\tAM Time\tLAM Max time\tAM Max time\n");
+    dprintf(fd, "Selektywność\tLAM Czas\tAM Czas\tLAM Maks czas\tAM Maks czas\n");
     for (i = 0; i < selectivity_len; ++i)
     {
         bs = (size_t)((double)(data_size * entries) * 0.01) / ssd->block_size;
